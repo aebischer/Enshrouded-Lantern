@@ -135,7 +135,7 @@ ENSHROUDED_MOD_EXPORT int ENSHROUDED_MOD_CALL EnshroudedModInitialize(const Ensh
   ok=ok&&MH_ApplyQueued()==MH_OK;
   if(!ok){for(auto target:targets)MH_DisableHook(target);return 0;}
   if(!lantern::native::initialize(logger)){for(auto target:targets)MH_DisableHook(target);return 0;}
-  logger("Lantern 0.1.26: native equipment selector and inventory bridge initialized");return 1;
+  logger("Lantern 0.1.27: native equipment selector and inventory bridge initialized");return 1;
  }catch(...){return 0;}
 }
 

@@ -1,114 +1,120 @@
-# Lanterne de ceinture — 0.1.26-dev
+# Belt Lantern for Enshrouded — 0.1.27-dev
 
-Mod DLL pour Enshrouded ModLoader ABI 1, destiné actuellement au solo.
-Lanterne craftable, emplacement d'équipement distinct des deux anneaux,
-modèle attaché à la ceinture et lumière native sans flamme extérieure.
+Craftable belt lanterns for [Enshrouded ModLoader](https://github.com/aebischer/Enshrouded-ModLoader),
+with a dedicated equipment slot, a waist-attached model and native lighting
+without an exposed flame. Windows x64, SDK ABI 1; currently intended for solo play.
 
 ## Installation
 
-1. Fermer complètement Enshrouded.
-2. Installer [Enshrouded ModLoader](https://github.com/aebischer/Enshrouded-ModLoader) (version utilisée : 0.6.10).
-3. Copier `Mods/lantern/lantern.dll` et `Mods/lantern/lantern.dll.mod`
-   dans le dossier du jeu, à côté des autres mods.
-4. Activer Lantern dans Modifier → MODS du monde, puis démarrer.
+Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader first (tested
+with 0.6.11), close the game, then copy the compiled files into:
 
-Exécutable Windows x64 construction 1287369, SHA-256 :
-`5D9EF2F140B8ED49E30DBEE655841B89D08BAEC20F799A1817E171A18A850C77`.
-Les autres exécutables sont refusés avant l'installation des hooks.
+```text
+Enshrouded/
+  enshrouded.exe
+  dinput8.dll                supplied by ModLoader
+  Mods/
+    lantern/
+      lantern.dll
+      lantern.dll.mod
+```
 
-## Équipement
+Enable Lantern in **Edit → MODS** for the selected world, then start that world.
+When updating, preserve `Mods/lantern/equipment-markers/`.
 
-Fabriquer la Lanterne de ceinture dans l'artisanat manuel, catégorie L'essentiel.
-Deux recettes manuelles, avec la bougie simple à poser :
+Supported Windows x64 client build: 1287369. `enshrouded.exe` SHA-256:
 
-- **Lanterne de ceinture** : 2 barres de fer + 1 bougie.
-- **Lanterne dorée** : 2 barres d’or + 1 bougie.
+```text
+5D9EF2F140B8ED49E30DBEE655841B89D08BAEC20F799A1817E171A18A850C77
+```
 
-Les deux lanternes utilisent la même case d’équipement. La version dorée
-possède son propre modèle Meshy, ses textures, son icône et ses textes.
-Réglage retenu pour la dorée : rayon 187,5 et intensité 100.
-La simple reste inchangée. Ces valeurs moteur ne garantissent pas une
-variation proportionnelle de la luminosité perçue.
+Other executables are rejected before hooks are installed.
 
-Dans Personnage (N), la case Lanterne ouvre le sélecteur natif d'équipement :
-lanterne portée, exemplaires disponibles, fiche et comparaison. Le sélecteur
-conserve les interactions natives, notamment sélection simple et validation
-par double clic ou la commande d'équipement. La case est distincte des anneaux.
-Chaque exemplaire disponible garde sa référence d'inventaire.
-Dans le sac (B), clic droit sur une lanterne → **Équiper** utilise le même
-transfert, avec remplacement de la lanterne portée si nécessaire.
+## Crafting and equipment
 
-Équiper transfère réellement l'exemplaire hors du sac. Remplacer la lanterne
-rend l'ancienne à la place libérée par la nouvelle, même si le sac est plein.
-Déséquiper nécessite une place libre. Une opération refusée ne doit pas
-remplacer un anneau ni supprimer l'objet. Le modèle et la lumière suivent
-l'état réel de cet emplacement.
+Both recipes are in manual crafting, under **Essentials**, and use the simple
+placeable candle:
 
-## Sauvegarde
+| Item | Recipe |
+|---|---|
+| Belt lantern | 2 iron bars + 1 candle |
+| Gilded lantern | 2 gold bars + 1 candle |
 
-Les données de l'objet équipé sont exportées et réimportées par le mécanisme
-natif d'inventaire. Un marqueur dans `Mods/lantern/equipment-markers/` permet de
-reconnaître la ligne déjà sauvegardée comme équipement de lanterne. Ce marqueur
-ne contient aucun objet et n'en crée pas une seconde copie.
+Both use the same dedicated equipment slot. The gilded version has its own
+model, textures, icon and text. Its retained engine lighting parameters are
+**radius 187.5** and **intensity 100**. The simple lantern is unchanged.
+These engine values are not photometric units and do not imply proportional
+changes in perceived brightness.
 
-Conserver ce dossier avec les sauvegardes du personnage. Sans marqueur, les
-données restent dans l'inventaire natif ; la lanterne revient dans le sac.
-Les anciens fichiers `characters/*.ini` du prototype ne sont plus utilisés.
-Il faut équiper la lanterne dans le nouveau sélecteur une première fois.
+In the **Character** page (N), click the Lantern slot to open the native equipment
+selector, showing the equipped lantern and available inventory instances with
+their detail/comparison panels. Selection and confirmation use native behavior,
+including double-clicking or the equipment action. The slot is separate from
+both rings. Alternatively, right-click a lantern in the bag (B) and choose **Equip**.
 
-## Validation et limites
+Equipping transfers the actual item out of the bag. Replacing a lantern returns
+the old one to the slot vacated by the new one, even if the bag was full.
+Unequipping requires free bag space. Refused operations must not replace a ring
+or remove an item. The model and light follow the actual equipped state.
 
-La 0.1.26 a des tests hors jeu des règles, des adaptateurs de transfert et de
-sauvegarde, du filtrage du sélecteur et des ressources. Les fonctions moteur
-sont remplacées par des doubles dans les tests d'adaptateurs : cela ne prouve
-pas le comportement en jeu. Alain a confirmé l'équipement depuis la case N et
-le menu contextuel, ainsi que le rendu lumineux retenu pour la dorée en 0.1.26.
-Le cycle sauvegarder → recharger de cette
-version n'a pas été rejoué.
+## Save data
 
-Solo uniquement. Multijoueur, serveur dédié, tombeau et autres versions du jeu
-ne sont pas validés. Pas de chargement visuel anticipé au menu principal.
-Textes propres français et anglais ; commandes du sélecteur localisées par le jeu.
+Equipped item data is exported and imported through native inventory storage.
+A marker under `Mods/lantern/equipment-markers/` identifies a saved inventory row
+as lantern equipment. It contains no item and does not create another copy.
 
-## Développement
+Back up this folder with character saves. Without its marker, the item remains
+in native inventory storage and returns to the bag. The old prototype
+`characters/*.ini` files are no longer used.
 
-- `build.cmd` : Visual Studio 2022 x64, C++17, /W4 /WX, runtime statique.
-- `test-content.cmd` : ressources, recette, coexistence CarryOn, modèle/lumière,
-  aperçu N, sélection d'instances et règles de restauration.
-- `test-equipment.cmd` : exécute les adaptateurs de production avec fonctions
-  moteur simulées ; transferts, erreurs, projection/import et sélecteur.
+## Languages
 
-Les fixtures natives sous `../work` et les sources CarryOn sont nécessaires aux
-tests de développement seulement. SDK ABI 1 et MinHook, licence jointe.
-Voir `docs/VALIDATION.md` pour l'historique des validations par version.
+All custom item names, descriptions, category labels and the equipment-slot title
+cover the game's 15 interface languages: English, French, German, Italian,
+Spanish, Russian, Polish, Japanese, Korean, Brazilian Portuguese, Thai, Turkish,
+Simplified Chinese, Traditional Chinese and Ukrainian. Native selector commands
+use the game's own translations. Language selection does not change saved data.
 
-### Compiler depuis ce dépôt
+`assets/localization/texts.json` is the source catalogue. The build validates
+all 15 languages before generating `src/lantern_texts.h`. Exact coverage is
+checked without counting English fallback as a translation. New translations
+still need visual and linguistic review in-game.
 
-Installer Visual Studio 2022 avec les outils C++ x64 et le SDK Windows, ainsi
-que PowerShell. Cloner ce dépôt puis exécuter `build.cmd` depuis sa racine.
-Les modèles prêts à embarquer, les icônes, les en-têtes SDK et MinHook sont
-inclus : CarryOn et les extractions du jeu ne sont pas requis pour compiler.
-Le résultat se trouve dans `dist/Mods/lantern/` ; copier ce dossier dans
-`Mods/` du jeu fermé. Ne pas remplacer le dossier `equipment-markers/`
-existant lors d'une mise à jour.
+## Build and test
 
-`test-equipment.cmd` utilise des simulations locales. La suite
-`test-content.cmd` nécessite aussi le dépôt CarryOn voisin et les fixtures
-extraites du jeu dans `../work/` ; ces ressources du jeu ne sont pas distribuées.
-Les dossiers de compilation, journaux, sauvegardes et marqueurs personnels
-ne font pas partie du dépôt.
+Install Visual Studio 2022 C++ x64 tools, the Windows SDK and PowerShell.
+Clone the repository and run `build.cmd` from its root. Prepared model packs,
+icons, SDK headers and MinHook are included. CarryOn and game extracts are not
+needed to build the DLL. Output: `dist/Mods/lantern/`.
 
+- `test-localization.cmd`: all 15 languages, native lookup/format adapters,
+  equipment title, language changes, fallbacks and unrelated native text.
+- `test-equipment.cmd`: production adapters with simulated engine functions;
+  transfers, errors, save projection/import and the native selector.
+- `test-content.cmd`: recipes, CarryOn coexistence, models/lights, character
+  preview, inventory selection and restoration. Requires the sibling CarryOn
+  source tree and native fixtures under `../work/`, which are not distributed.
 
+Build uses C++17, `/W4 /WX` and the static runtime. Generated binaries, logs,
+saves and personal markers are not tracked. See [validation history](docs/VALIDATION.md).
 
-## Modèle doré
+Offline tests pass, including localization and equipment. User testing confirmed
+equipping through the character slot and context menu, and the retained gilded
+lighting in 0.1.26. A new save/reload cycle was not performed for this localization
+build. Multiplayer, dedicated servers, tombstone interactions and other game
+versions are not validated. The main-menu character preview is intentionally
+not loaded before a world enables the mod; the in-world character preview is supported.
 
-Source : `assets/lantern-gold3d/source/` (FBX et textures Meshy).
-Les scripts de régénération des modèles supposent encore un dossier nommé
-`Lantern` dans l'espace de développement, avec `work` à côté. Blender,
-Python et texconv sont nécessaires à cette régénération uniquement.
-`prepare-lantern-model.py --gold` se lance avec Blender en arrière-plan.
-Convertir les textures avec texconv : albedo BC7_UNORM_SRGB, normal BC5_UNORM,
-emissive BC6H_UF16, rma BC1_UNORM, puis `pack-lantern-model.py --gold`.
-`test-lantern-model.py --gold` utilise le décodeur indépendant configuré via
-LANTERN_MODEL_REFERENCE. Le pack est embarqué dans la DLL (ressource 402).
-Hauteur nominale 28 cm ; niveaux de détail de 4000, 1200 et 558 triangles.
+## Model sources
+
+The two model source directories are `assets/lantern3d/source/` and
+`assets/lantern-gold3d/source/` (Meshy FBX and textures). Regeneration scripts
+currently expect a workspace folder named `Lantern` with a sibling `work`
+directory. Blender, Python and texconv are needed only for asset regeneration.
+
+Run `prepare-lantern-model.py --gold` through Blender in background mode.
+Texture formats: albedo BC7_UNORM_SRGB, normal BC5_UNORM, emissive BC6H_UF16,
+and RMA BC1_UNORM. Then run `pack-lantern-model.py --gold`.
+`test-lantern-model.py --gold` uses the independent decoder configured through
+`LANTERN_MODEL_REFERENCE`. The gilded pack is embedded as DLL resource 402.
+Nominal height: 28 cm; LOD triangle counts: 4,000, 1,200 and 558.

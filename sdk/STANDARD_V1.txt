@@ -1,0 +1,207 @@
+MOD STANDARD — Enshrouded ModLoader — Version 1
+Project contract: existing ABI 1, documented November 13, 2026; updated for 0.6.11.
+This is the normative reference for internal and third-party mods.
+It is not an official Keen Games standard or an official game API.
+
+1. One contract for all mods
+
+Every compatible mod follows the same rules, validation and SDK. Internal test
+fixtures and CarryOn have no special package format or privileges. DLLs from
+other frameworks are not converted automatically. Authors must implement this
+contract and verify their game's and loader's supported versions.
+
+There are two independent versions:
+- ENSHROUDED_PACKAGE_V1: manifest syntax.
+- abi=1: binary function and context interface.
+The mod's version=... is independent of both. The current loader is 0.6.11,
+pinned to the executable SHA-256 in src/loader.cpp. Acceptance of a manifest
+does not validate a mod's own native offsets.
+
+2. Distributed package and identity
+
+Recommended layout, extracted into the game directory:
+
+Mods/
+  author/
+    author_mymod.dll
+    author_mymod.dll.mod
+
+Required: a Windows x64 DLL and an adjacent manifest whose name is exactly the
+DLL filename plus .mod. Use a unique project/author directory. DLL basenames
+must also be unique throughout the dependency graph, even across directories.
+A mod does not distribute its own dinput8.dll; that file belongs to the loader.
+Sources, README files and licenses may be supplied alongside the package.
+
+The mod ID is its DLL path relative to Mods, normalized to lowercase and /.
+Example: author/author_mymod.dll. Keep it stable. Renaming or moving a mod
+changes its identity in world profiles and settings and requires explicit
+migration. Absolute paths, .. traversal, NTFS streams and paths outside Mods
+are rejected. Physical aliases and ambiguous DLL names fail preflight.
+
+3. Manifest (UTF-8, optional BOM, LF or CRLF)
+
+ENSHROUDED_PACKAGE_V1
+kind=mod
+version=1.0.0
+abi=1
+setting=messages|bool|Messages|true
+setting=mode|choice|Mode|normal|slow|normal|fast
+setting=intensity|percent|Intensity|100|0|200|25
+
+kind, version and abi are mandatory and unique. Unknown keys are rejected:
+do not add author, id, side, assets, network or min_loader_version to V1.
+Version strings have 1–64 ASCII letters/digits, dots, hyphens or underscores.
+MAJOR.MINOR.PATCH is recommended. Dependency versions are exact strings,
+not semantic-version ranges.
+
+Optional dependency, repeatable for distinct IDs:
+require=author/author_support.dll@1.0.0
+
+Paths are relative to Mods, not to the declaring DLL's directory. A required
+kind=mod dependency must be explicitly enabled. A support DLL declares
+kind=library and loads automatically when required. It has its own manifest,
+no settings and no EnshroudedModInitialize export.
+
+Declare all non-system imports, including delay imports. Exact versions,
+ordinary/delay imports and cycles are checked before any module executes.
+Limits: 16 KiB per manifest, 64 direct dependencies, depth 64 and 1,024 modules
+in total. Duplicate/unknown keys and unsupported ABIs are rejected.
+
+4. Integration exports — sdk/include/enshrouded_mod.h
+
+Required for kind=mod:
+ENSHROUDED_MOD_EXPORT int ENSHROUDED_MOD_CALL EnshroudedModInitialize(
+    const EnshroudedModContext* context);
+
+Required when the manifest declares settings:
+ENSHROUDED_MOD_EXPORT int ENSHROUDED_MOD_CALL EnshroudedModConfigure(
+    const char* world_id, const char* settings_utf8);
+
+Configure is optional and not called when there are no settings. The supplied
+example implements both exports. Do not invent other mandatory exports or
+assume the loader calls custom exports automatically.
+
+Return exactly 1 for success or 0 for failure. Any other value is a refusal.
+Use C linkage, __cdecl and x64; do not alter structure packing.
+ABI 1 context size: 24 bytes, containing size, abi_version, world_id, write_log.
+Check pointers, size >= sizeof(EnshroudedModContext), and abi_version == 1.
+world_id is the world's 32-character lowercase hexadecimal GUID.
+
+Configure receives all effective values, including defaults, as UTF-8 key=value
+lines sorted by key and separated by LF. Its pointers are borrowed for that
+call only; copy anything retained. The Initialize context and its world_id
+remain valid until process exit. Never modify/free loader-owned memory or
+exchange C++ allocations between modules. The logger accepts a NUL-terminated
+UTF-8 string, truncated to 4,096 bytes. C++ exceptions must not cross the ABI.
+
+5. Order and lifetime
+
+The MODS page reads the manifest; it does not execute a DLL to draw its options.
+At world launch, the loader validates the complete graph and reads all settings,
+then loads dependencies before dependants. For each mod with settings it calls
+Configure, then Initialize. Without settings it calls Initialize only.
+
+These exports run outside DllMain, although LoadLibrary may execute DllMain.
+Do not start gameplay, install hooks or create threads inside DllMain. The
+example does not define one. Initialization is once per process. ABI 1 has no
+shutdown, hot-unload or world-open/world-close callback. A partially initialized
+DLL may remain resident and require restarting the game after refusal.
+Manage resources without assuming Initialize runs again when re-entering a world.
+
+6. Settings and storage
+
+The loader owns native UI, defaults, validation and per-world persistence.
+The mod consumes supplied values; do not duplicate these gameplay settings in
+a competing configuration file.
+
+V1 types:
+- bool: key|bool|label|true or false.
+- choice: key|choice|label|default|choice1|choice2[...], 2–8 distinct choices.
+- percent: key|percent|label|default|min|max|step. Integers from 0 to 10000,
+  min < max, positive step, default on the grid, at most 32 positions.
+
+Maximum 16 settings. Keys: 1–40 characters [a-z0-9_]. Fields: at most 100 bytes.
+Labels/values cannot contain =, tab, newline, NUL or the | separator. Defaults
+must be valid values. Boolean controls display localized Enabled/Disabled;
+choices and percentages use the native difficulty controls.
+
+Loader-owned storage:
+ModLoader/worlds/<GUID>.mods
+ModLoader/worlds/<GUID>.settings-v2/<SHA256-normalized-UTF8-mod-id>.ini
+
+Settings persist while a mod is disabled. Missing files mean defaults; invalid
+files produce an error, not silent replacement. Mods should not depend directly
+on these physical filenames. Schema changes can invalidate old settings. V1
+has no schema-migration callback: keep keys/values compatible or document and
+implement migration before distributing an incompatible change.
+
+7. Evolution, servers and trust
+
+ABI 1 is fixed: no silent changes to context layout, signatures or call order.
+An incompatible extension needs an explicit ABI and a loader supporting it.
+Changing version=... alone does not make a different ABI compatible.
+
+Multiplayer and dedicated-server support are not certified by V1. There is no
+network API, connection-time version negotiation or client/server/both field.
+These need a versioned extension, server authority and settings owned by the
+server's world. See docs/server-multiplayer-decisions.txt in the loader repo.
+Do not claim server support solely because package validation succeeds.
+
+A DLL is trusted native code, not isolated code. Preflight detects format and
+dependency errors; it does not certify safety, behavior or freedom from hook
+conflicts. It cannot prevent DLLs from loading additional code themselves.
+
+8. Release procedure
+
+1) Use the public header and start from sdk/example.
+2) Build Windows x64. The example uses /MT to reduce external runtime dependencies.
+3) Package the DLL, manifest and declared dependencies under Mods.
+4) Run the common validator without launching the game:
+   build/validate_mod_package.exe <package-root-containing-Mods> author/author_mymod.dll
+   Add other enabled/required mod IDs as arguments. Libraries resolve automatically.
+   Exit codes: 0 = static checks passed; 1 = refused; 2 = invalid arguments.
+5) Test two worlds with distinct settings, limits, explicit refusals, restarts,
+   save/reload and relevant gameplay. Document the actually tested game/loader
+   versions and remaining limitations.
+
+The validator calls the loader's makeLoadPlan without executing mod DLLs; it
+is not a separate rule set. Test_A/Test_B are development fixtures using the
+same public header, manifests, preflight and lifetime rules as other mods.
+They are not included in the player distribution.
+
+9. Localization (manifest extension, ModLoader 0.6.10+)
+
+Player-facing text follows the language selected in Enshrouded, not Windows.
+IDs and saved values remain stable. ABI 1 is unchanged. Old manifests remain
+accepted; older loaders reject text entries and must be updated.
+
+For a choice setting named mode, with internal values low/high:
+text=en|setting.mode|Mode
+text=fr|setting.mode|Mode de transport
+text=en|choice.mode.0|Low
+text=en|choice.mode.1|High
+text=fr|choice.mode.0|Faible
+text=fr|choice.mode.1|Élevé
+
+One UTF-8 entry per language/key. Unknown or duplicate keys are rejected.
+Labels: 1–100 UTF-8 bytes, without |, =, tabs, newlines or NUL. The global 16 KiB
+manifest limit still applies. Booleans use loader translations; percentages
+retain their numeric values and % suffix.
+
+Fallback: exact language, regional parent, English, then the declared setting
+label. Examples: fr-ca -> fr -> en; es-mx -> es-419 -> es -> en.
+
+Optional C++17 include/enshrouded_i18n.h maps native language IDs and looks up
+embedded catalogues. It does not read game memory or add a native API to ABI 1.
+The mod must connect its item resource IDs to the game's text service using
+an adapter validated against the supported client. Manifest text entries
+translate settings only, not arbitrary game resources.
+
+Game interface languages: en, de, fr, it, es, ru, pl, ja, ko, pt-br, th, tr,
+zh-cn, zh-tw, uk. Other recognized engine codes appear in the header; they do
+not imply additional supported interface translations. supportedLanguages
+lists the actual native IDs; these are not the contiguous range 0..14.
+
+See LOCALISATION.txt for the full procedure and strict 15-language catalogue
+compiler supplied with SDK 0.6.11. build-sdk.cmd tests the bilingual example
+and verifies that changing labels does not change saved values.

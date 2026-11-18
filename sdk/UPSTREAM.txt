@@ -1,0 +1,11 @@
+Source: https://github.com/aebischer/Enshrouded-ModLoader
+Commit: bd2706ba80e5014c8084a875a25769d7839df63d
+Contract: SDK V1 / ABI 1, ModLoader 0.6.11.
+
+Public headers and English SDK guides are copied from this revision.
+The catalogue compiler and test helpers are included without modification.
+This copy makes the mod independent of the loader source directory when building.
+Do not change the ABI here. To update, copy the upstream files, record the new
+commit and rerun tests. Native gameplay hooks/adapters belong to the mod.
+
+Upstream tutorial: sdk/CREER_UN_MOD.md (English content; stable filename).

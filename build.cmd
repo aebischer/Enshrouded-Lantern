@@ -4,6 +4,8 @@ cd /d "%~dp0"
 call tools\vcvars.cmd
 if errorlevel 1 exit /b 1
 if not exist build mkdir build
+powershell -NoProfile -ExecutionPolicy Bypass -File sdk\tools\compile-translations.ps1 -Catalog assets\localization\texts.json -Output src\lantern_texts.h -Symbol LanternTexts
+if errorlevel 1 exit /b 1
 if not exist dist\Mods\lantern mkdir dist\Mods\lantern
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\embed-icon.ps1
 if errorlevel 1 exit /b 1

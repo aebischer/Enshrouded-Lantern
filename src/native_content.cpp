@@ -4,6 +4,8 @@
 #include "lantern_pixels.h"
 #include "lantern_slot_pixels.h"
 #include "lantern_gold_pixels.h"
+#include "../sdk/include/enshrouded_i18n.h"
+#include "lantern_texts.h"
 
 
 
@@ -260,12 +262,13 @@ Byte* __fastcall keyOf(Byte* out,void* db,uint32_t handle) {
  return originalKey(out,db,handle);
 }
 const char* text(uint32_t id,uint32_t selectedLanguage) {
- const bool french=selectedLanguage==5||selectedLanguage==22;
- if(id==hash(GoldName))return french?"Lanterne dorée":"Gilded lantern";
- if(id==hash(GoldDescription))return french?"Un écrin d’or pour une lumière fidèle, même au cœur des longues nuits.":"A golden home for a faithful light, even through the longest nights.";
- if(id==hash(Name))return french?"Lanterne de ceinture":"Belt lantern";
- if(id==hash(Caption))return french?"Accessoire":"Accessory";
- if(id==hash(Description))return french?"Une petite lumière pour les longues nuits. Équipez-la dans la case Lanterne du personnage pour garder les mains libres.":"A small light for long nights. Equip it in the character's Lantern slot to keep your hands free.";
+ const char* key=nullptr;
+ if(id==hash(GoldName))key="gold.name";
+ else if(id==hash(GoldDescription))key="gold.description";
+ else if(id==hash(Name))key="item.name";
+ else if(id==hash(Caption))key="item.caption";
+ else if(id==hash(Description))key="item.description";
+ if(key)return enshrouded::i18n::find(LanternTexts,key,selectedLanguage);
  return nullptr;
 }
 uint64_t* __fastcall lookup(uint64_t* out,void* pool,uint32_t id) {
@@ -489,7 +492,7 @@ void activateNativeHooks() {
 }
 
 }
-const char* equipmentTitle() noexcept {const auto lang=language.load(std::memory_order_relaxed);return lang==5||lang==22?"Lanterne":"Lantern";}
+const char* equipmentTitle() noexcept {const auto lang=language.load(std::memory_order_relaxed);return enshrouded::i18n::find(LanternTexts,"equipment.title",lang);}
 const void* itemDescriptor(unsigned id) noexcept {return (id==hash(GoldItem)?publishedGoldItem:publishedItem).load(std::memory_order_acquire);}
 const void* equipmentDescriptor(unsigned id) noexcept {return (id==hash(GoldItem)?publishedGoldEquipment:publishedEquipment).load(std::memory_order_acquire);}
 unsigned itemId() noexcept {return hash(Item);}

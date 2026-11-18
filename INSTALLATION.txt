@@ -1,0 +1,51 @@
+BELT LANTERN 0.1.27-dev — WINDOWS X64
+Development build — no compiler required for the release ZIP
+
+REQUIRES: Enshrouded ModLoader (tested with 0.6.11).
+https://github.com/aebischer/Enshrouded-ModLoader/releases
+Install the loader first using its INSTALLATION.txt.
+
+1. Close Enshrouded and back up your saves.
+2. Extract the complete Lantern ZIP.
+3. In Steam: Enshrouded -> Properties -> Installed Files -> Browse.
+4. Merge Mods/lantern into the game's Mods directory beside enshrouded.exe:
+
+Enshrouded/
+  enshrouded.exe
+  dinput8.dll                    supplied by the loader
+  Mods/
+    lantern/
+      lantern.dll
+      lantern.dll.mod
+
+Do not create Mods/Mods or copy the files into ModLoader. No additional model
+or texture installation is required. When updating, replace only the DLL and
+manifest; preserve equipment-markers and all other saved data.
+
+5. Start the game -> Edit world -> MODS -> Lantern -> Enable.
+6. In manual crafting / Essentials, craft:
+   Belt lantern: 2 iron bars + 1 placeable candle.
+   Gilded lantern: 2 gold bars + 1 placeable candle.
+7. Open Character (N), click the dedicated Lantern slot and equip an inventory
+   lantern using the native selector. Alternatively, right-click a lantern in
+   the bag (B) and choose Equip. Unequipping requires a free inventory slot.
+
+Both variants share one slot, separate from the rings. The model follows the
+character's waist and provides native lighting without an exposed flame.
+Gilded light parameters: radius 187.5, intensity 100. The simple light is unchanged.
+
+SAVE DATA: back up Mods/lantern/equipment-markers with your character saves.
+The marker identifies native equipped-item storage; it is not another item.
+If missing, the item returns to the bag from native inventory storage.
+
+Supported enshrouded.exe SHA-256:
+5D9EF2F140B8ED49E30DBEE655841B89D08BAEC20F799A1817E171A18A850C77
+Solo use only; other game versions, multiplayer, dedicated servers and tombstone
+interactions are not validated. The main-menu character does not show the
+lantern before a world enables the mod. The in-world Character preview is supported.
+
+All 15 game interface languages are included. Documentation uses English.
+Offline localization, equipment and content tests pass; visual/linguistic review
+of the new translations remains a manual in-game check.
+Use SHA256SUMS.txt and Get-FileHash to verify release contents.
+Sources and private downloads: https://github.com/aebischer/Enshrouded-Lantern

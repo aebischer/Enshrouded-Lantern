@@ -1,0 +1,122 @@
+{
+  "en": {
+    "item.name": "Belt lantern",
+    "item.caption": "Accessory",
+    "gold.name": "Gilded lantern",
+    "equipment.title": "Lantern",
+    "gold.description": "A golden home for a faithful light, even through the longest nights.",
+    "item.description": "A small light for long nights. Equip it in the character’s Lantern slot to keep your hands free."
+  },
+  "fr": {
+    "item.name": "Lanterne de ceinture",
+    "item.caption": "Accessoire",
+    "gold.name": "Lanterne dorée",
+    "equipment.title": "Lanterne",
+    "gold.description": "Un écrin d’or pour une lumière fidèle, même au cœur des longues nuits.",
+    "item.description": "Une petite lumière pour les longues nuits. Équipez-la dans la case Lanterne du personnage pour garder les mains libres."
+  },
+  "de": {
+    "item.name": "Gürtellaterne",
+    "item.caption": "Accessoire",
+    "gold.name": "Vergoldete Laterne",
+    "equipment.title": "Laterne",
+    "gold.description": "Ein goldenes Gehäuse für ein treues Licht, selbst in den längsten Nächten.",
+    "item.description": "Ein kleines Licht für lange Nächte. Im Laternenplatz des Charakters ausgerüstet bleiben die Hände frei."
+  },
+  "it": {
+    "item.name": "Lanterna da cintura",
+    "item.caption": "Accessorio",
+    "gold.name": "Lanterna dorata",
+    "equipment.title": "Lanterna",
+    "gold.description": "Uno scrigno dorato per una luce fedele, anche nelle notti più lunghe.",
+    "item.description": "Una piccola luce per le lunghe notti. Equipaggiala nello slot Lanterna del personaggio per avere le mani libere."
+  },
+  "es": {
+    "item.name": "Farol de cinturón",
+    "item.caption": "Accesorio",
+    "gold.name": "Farol dorado",
+    "equipment.title": "Farol",
+    "gold.description": "Un refugio dorado para una luz fiel, incluso en las noches más largas.",
+    "item.description": "Una pequeña luz para las noches largas. Equípala en la ranura de farol del personaje para tener las manos libres."
+  },
+  "ru": {
+    "item.name": "Поясной фонарь",
+    "item.caption": "Аксессуар",
+    "gold.name": "Позолоченный фонарь",
+    "equipment.title": "Фонарь",
+    "gold.description": "Золотая обитель для верного огонька, не гаснущего даже в самые долгие ночи.",
+    "item.description": "Маленький огонёк для долгих ночей. Наденьте его в ячейку фонаря персонажа, чтобы руки оставались свободными."
+  },
+  "pl": {
+    "item.name": "Latarnia przy pasie",
+    "item.caption": "Akcesorium",
+    "gold.name": "Pozłacana latarnia",
+    "equipment.title": "Latarnia",
+    "gold.description": "Złota oprawa dla wiernego światła, nawet podczas najdłuższych nocy.",
+    "item.description": "Małe światło na długie noce. Wyposaż je w miejscu na latarnię postaci, aby mieć wolne ręce."
+  },
+  "ja": {
+    "item.name": "ベルトランタン",
+    "item.caption": "アクセサリー",
+    "gold.name": "金色のランタン",
+    "equipment.title": "ランタン",
+    "gold.description": "どれほど長い夜も照らし続ける、頼もしい灯りを収めた金色の器。",
+    "item.description": "長い夜を照らす小さな灯り。キャラクターのランタン枠に装備すれば、両手を自由に使える。"
+  },
+  "ko": {
+    "item.name": "허리 랜턴",
+    "item.caption": "장신구",
+    "gold.name": "금빛 랜턴",
+    "equipment.title": "랜턴",
+    "gold.description": "가장 긴 밤에도 한결같이 빛나는 불빛을 품은 황금빛 보금자리.",
+    "item.description": "긴 밤을 밝히는 작은 불빛. 캐릭터의 랜턴 슬롯에 장착하면 양손을 자유롭게 쓸 수 있습니다."
+  },
+  "pt-br": {
+    "item.name": "Lanterna de cinto",
+    "item.caption": "Acessório",
+    "gold.name": "Lanterna dourada",
+    "equipment.title": "Lanterna",
+    "gold.description": "Um abrigo dourado para uma luz fiel, mesmo nas noites mais longas.",
+    "item.description": "Uma pequena luz para noites longas. Equipe-a no espaço de lanterna do personagem para manter as mãos livres."
+  },
+  "th": {
+    "item.name": "ตะเกียงคาดเอว",
+    "item.caption": "เครื่องประดับ",
+    "gold.name": "ตะเกียงทอง",
+    "equipment.title": "ตะเกียง",
+    "gold.description": "เรือนทองโอบอุ้มแสงอันมั่นคง แม้ในค่ำคืนที่ยาวนานที่สุด",
+    "item.description": "แสงเล็ก ๆ สำหรับค่ำคืนอันยาวนาน สวมในช่องตะเกียงของตัวละครเพื่อให้มือทั้งสองว่าง"
+  },
+  "tr": {
+    "item.name": "Kemer feneri",
+    "item.caption": "Aksesuar",
+    "gold.name": "Yaldızlı fener",
+    "equipment.title": "Fener",
+    "gold.description": "En uzun gecelerde bile sönmeyen sadık bir ışık için altın bir yuva.",
+    "item.description": "Uzun geceler için küçük bir ışık. Ellerinizi serbest bırakmak için karakterin Fener yuvasına takın."
+  },
+  "zh-cn": {
+    "item.name": "腰灯",
+    "item.caption": "配饰",
+    "gold.name": "镀金提灯",
+    "equipment.title": "提灯",
+    "gold.description": "金色的灯身守护着忠实的光芒，伴你度过最漫长的夜晚。",
+    "item.description": "照亮漫漫长夜的一盏小灯。装备到角色的提灯栏位，即可腾出双手。"
+  },
+  "zh-tw": {
+    "item.name": "腰燈",
+    "item.caption": "配飾",
+    "gold.name": "鍍金提燈",
+    "equipment.title": "提燈",
+    "gold.description": "金色的燈身守護著忠實的光芒，伴你度過最漫長的夜晚。",
+    "item.description": "照亮漫漫長夜的一盞小燈。裝備到角色的提燈欄位，即可騰出雙手。"
+  },
+  "uk": {
+    "item.name": "Поясний ліхтар",
+    "item.caption": "Аксесуар",
+    "gold.name": "Позолочений ліхтар",
+    "equipment.title": "Ліхтар",
+    "gold.description": "Золота оселя для вірного вогника, що світить навіть у найдовші ночі.",
+    "item.description": "Маленький вогник для довгих ночей. Спорядьте його в комірку ліхтаря персонажа, щоб руки залишалися вільними."
+  }
+}
