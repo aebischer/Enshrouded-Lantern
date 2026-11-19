@@ -95,11 +95,11 @@ Clone the repository and run `build.cmd` from its root. Prepared model packs,
 icons, SDK headers and MinHook are included. CarryOn and game extracts are not
 needed to build the DLL. Output: `dist/Mods/lantern/`.
 
-- `test-localization.cmd`: all 15 languages, native lookup/format adapters,
+- `tests/test-localization.cmd`: all 15 languages, native lookup/format adapters,
   equipment title, language changes, fallbacks and unrelated native text.
-- `test-equipment.cmd`: production adapters with simulated engine functions;
+- `tests/test-equipment.cmd`: production adapters with simulated engine functions;
   transfers, errors, save projection/import and the native selector.
-- `test-content.cmd`: recipes, CarryOn coexistence, models/lights, character
+- `tests/test-content.cmd`: recipes, CarryOn coexistence, models/lights, character
   preview, inventory selection and restoration. Requires the sibling CarryOn
   source tree and native fixtures under `../work/`, which are not distributed.
 
@@ -124,6 +124,6 @@ directory. Blender, Python and texconv are needed only for asset regeneration.
 Run `prepare-lantern-model.py --gold` through Blender in background mode.
 Texture formats: albedo BC7_UNORM_SRGB, normal BC5_UNORM, emissive BC6H_UF16,
 and RMA BC1_UNORM. Then run `pack-lantern-model.py --gold`.
-`test-lantern-model.py --gold` uses the independent decoder configured through
+`python tests/test-lantern-model.py --gold` uses the independent decoder configured through
 `LANTERN_MODEL_REFERENCE`. The gilded pack is embedded as DLL resource 402.
 Nominal height: 28 cm; LOD triangle counts: 4,000, 1,200 and 558.

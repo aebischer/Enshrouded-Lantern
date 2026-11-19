@@ -15,7 +15,7 @@ Essais réellement réalisés en jeu :
 Deux pierres consommées : premier exemplaire supprimé pour tester la possession,
 second conservé. Aucun décor déplacé ni détruit.
 
-Compilation optimisée /W4 /WX et test-content.cmd réussis : catalogues, recette,
+Compilation optimisée /W4 /WX et tests/test-content.cmd réussis : catalogues, recette,
 coexistence dans les deux ordres avec CarryOn, doublons, attachement, lumière.
 
 Non validé : multijoueur, serveur dédié, autres versions, toutes résolutions,

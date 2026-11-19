@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0"
+cd /d "%~dp0.."
 call tools\vcvars.cmd
 if errorlevel 1 exit /b 1
 pushd build
