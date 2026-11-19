@@ -44,7 +44,7 @@ void run(){
   assert(output==before&&rows==previousRows&&entity==previousEntity&&result==previousResult);
  };
  messages.clear();snapshotDiagnostics=0;invoke();
- assert(messages.size()==1&&messages.back().find("equipment=2/16 genericPages=5 backpackPages=2 itemRows=2 lanternRows=1")!=std::string::npos);
+ assert(messages.size()==1&&messages.back().find("equipment=2/16 projectedGenericPages=5 backpackPages=2 itemRows=2 lanternRows=1")!=std::string::npos);
  for(int i=0;i<10;++i)invoke();
  assert(messages.size()==4&&calls==11);
  snapshotDiagnostics=0;messages.clear();result[0]=7;invoke();
@@ -60,6 +60,7 @@ void run(){
  invoke();assert(equipment_storage::records==1);
  result[0]=7;invoke();assert(equipment_storage::records==1);
  result[0]=0;logger=nullptr;equipment_storage::recordOk=false;
- invoke();assert(equipment_storage::records==2);logger=&log;
+ assert(characterSnapshot(result.data(),output.data(),&state,&registry,&layout,0x123456789abcdef0ull,entity.data())==result.data());
+ assert(result[0]==0x11&&equipment_storage::records==2);logger=&log;
 }
 }

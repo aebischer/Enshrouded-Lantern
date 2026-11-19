@@ -1,5 +1,5 @@
 // Native inventory bridge for the pinned executable. Included after the ECS
-// component helpers. The marker records a choice, never the only copy of an item.
+// component helpers. Equipment is committed inside the native character section.
 namespace equipment_storage {
 using namespace lantern::save_bridge;
 using Import=void*(__fastcall*)(void*,void*,uint32_t,uint8_t,const void*,const void*,void*);
@@ -66,14 +66,44 @@ std::filesystem::path marker(const void* snapshot,const std::vector<Row>& rows) 
     char name[65]{};for(size_t i=0;i<digest.size();++i)sprintf_s(name+i*2,3,"%02x",digest[i]);
     return characterDirectory.parent_path()/L"equipment-markers"/(std::string(name)+".v1");
 }
-bool record(const void* snapshot) {
+bool record(void* snapshot) {
     std::vector<Row> rows;if(!rowsOf(snapshot,rows))return false;
-    if(!prepare(group(snapshot,0x1e38),group(snapshot,0x1e44),rows,lantern::native::itemId(),lantern::native::goldItemId()).valid)return false;
-    const auto path=marker(snapshot,rows);if(path.empty())return false;
-    std::filesystem::create_directories(path.parent_path());
-    const auto temporary=std::filesystem::path(path.wstring()+L".tmp");
-    {std::ofstream file(temporary,std::ios::binary|std::ios::trunc);file<<"Lantern equipment choice 1\n";file.flush();if(!file)return false;}
-    return MoveFileExW(temporary.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0;
+    const auto r=prepare(group(snapshot,0x1e38),group(snapshot,0x1e44),rows,lantern::native::itemId(),lantern::native::goldItemId());
+    if(!r.valid)return false;
+    tag(read<Row*>(snapshot,0x1e50)[r.index]);return true;
+}
+void putGroup(void* snapshot,size_t at,Group value){
+    set<uint8_t>(snapshot,at,value.pages);set<uint32_t>(snapshot,at+4,value.begin);set<uint32_t>(snapshot,at+8,value.count);
+}
+void adjustReferences(void* snapshot,uint32_t removed){
+    for(size_t at:{size_t(0x1e28),size_t(0x1e2c),size_t(0x1e30),size_t(0x1e34)}){
+        const auto value=read<uint16_t>(snapshot,at);
+        if(read<uint8_t>(snapshot,at+2)&&value>removed)set<uint16_t>(snapshot,at,static_cast<uint16_t>(value-1));
+    }
+}
+// e37100 serializes a character snapshot into the native output stream. The
+// extension is inside the same KSD section/commit, after the native S2BH block.
+// Native readers ignore trailing section bytes. No page count is enlarged on disk.
+using Encode=void*(__fastcall*)(void*,void*,void*,const void*);
+Encode originalEncode=nullptr;
+void* __fastcall encode(void* result,void* stream,void* compressor,const void* snapshot){
+    try{
+        std::vector<Row> rows;
+        if(!rowsOf(snapshot,rows))return originalEncode(result,stream,compressor,snapshot);
+        bool ours=false;for(const auto& row:rows)ours=ours||tagged(row);
+        if(!ours)return originalEncode(result,stream,compressor,snapshot);
+        const auto p=project(group(snapshot,0x1e38),group(snapshot,0x1e44),rows,lantern::native::itemId(),lantern::native::goldItemId());
+        if(!p.valid){set<uint64_t>(result,0,0x11);return result;}
+        std::array<unsigned char,0x54e0> copy{};std::memcpy(copy.data(),snapshot,copy.size());
+        putGroup(copy.data(),0x1e38,p.bag);putGroup(copy.data(),0x1e44,p.backpack);
+        set<const Row*>(copy.data(),0x1e50,p.rows.data());set<uint64_t>(copy.data(),0x1e58,p.rows.size());set<uint64_t>(copy.data(),0x1e60,p.rows.size());
+        if(!p.inBag)adjustReferences(copy.data(),p.index);
+        const auto returned=originalEncode(result,stream,compressor,copy.data());
+        if(!returned||read<uint8_t>(returned,0))return returned;
+        const auto ext=extension(p);
+        ui<void(__fastcall*)(void*,const void*,uint64_t)>(0x043b20)(stream,ext.data(),ext.size());
+        set<uint8_t>(returned,0,read<uint8_t>(stream,0x20));return returned;
+    }catch(...){set<uint64_t>(result,0,0x11);logger("Lantern: character encoding refused; previous save retained");return result;}
 }
 void* __fastcall load(void* result,const void* blob,void* server,uint32_t index,const void* argument) {
     Loading state{};
@@ -83,26 +113,47 @@ void* __fastcall load(void* result,const void* blob,void* server,uint32_t index,
     return returned;
 }
 void* __fastcall decode(void* result,void* snapshot,void* allocator,const void* span) {
-    const auto returned=originalDecode(result,snapshot,allocator,span);
+    struct Span {const unsigned char* data;uint64_t size;};
+    auto input=read<Span>(span,0);Extension ext{};bool extended=false;
+    if(input.data&&input.size>=ext.size()&&input.size<=16*1024*1024&&
+       !std::memcmp(input.data+input.size-8,"LNTEND02",8)){
+        std::memcpy(ext.data(),input.data+input.size-ext.size(),ext.size());
+        if(!extensionValid(ext,lantern::native::itemId(),lantern::native::goldItemId())){
+            set<uint64_t>(result,0,0x11);logger("Lantern: damaged equipment extension; character load refused");return result;
+        }
+        input.size-=ext.size();extended=true;
+    }
+    const auto returned=originalDecode(result,snapshot,allocator,extended?&input:span);
     if(!loading||!returned||read<uint8_t>(returned,0)||!snapshot)return returned;
     loading->parsed=true;
     try {
         std::vector<Row> rows;if(!rowsOf(snapshot,rows))return returned;
+        if(extended){
+            Row equippedRow{};std::memcpy(equippedRow.data(),ext.data()+16,56);
+            auto bag=group(snapshot,0x1e38),backpack=group(snapshot,0x1e44);
+            const auto index=read<uint32_t>(ext.data(),12),mode=read<uint32_t>(ext.data(),8);
+            if(!valid(bag,rows.size())||!valid(backpack,rows.size())){set<uint64_t>(result,0,0x11);return returned;}
+            if(mode==1){
+                if(!bag.count||index!=bag.begin+bag.count-1||index>=rows.size()){set<uint64_t>(result,0,0x11);return returned;}
+                auto actual=canonical(rows[index]);actual[4]=0;
+                if(actual!=equippedRow){set<uint64_t>(result,0,0x11);return returned;}
+                rows.erase(rows.begin()+index);--bag.count;if(backpack.begin>index)--backpack.begin;
+                std::memcpy(read<Row*>(snapshot,0x1e50),rows.data(),rows.size()*sizeof(Row));
+                set<uint64_t>(snapshot,0x1e58,rows.size());putGroup(snapshot,0x1e38,bag);putGroup(snapshot,0x1e44,backpack);
+                adjustReferences(snapshot,index);
+            }else if(index!=bag.begin+bag.count){set<uint64_t>(result,0,0x11);return returned;}
+            loading->restore={true,index,bag,equippedRow};return returned;
+        }
+        // One-time import of pre-0.1.28 saves. Missing markers must not leave
+        // the old extra page to overflow native inventory initialization.
         auto restore=prepare(group(snapshot,0x1e38),group(snapshot,0x1e44),rows,lantern::native::itemId(),lantern::native::goldItemId());
         if(!restore.valid)return returned;
-        const auto path=marker(snapshot,rows);if(path.empty())return returned;
-        std::ifstream file(path,std::ios::binary);std::string line;std::getline(file,line);
-        if(line!="Lantern equipment choice 1")return returned;
-        // Keep the saved row and the backpack range intact. Only exclude the
-        // final private row from the main-bag import; import it once below.
-        set<uint8_t>(snapshot,0x1e38,restore.bag.pages);
-        set<uint32_t>(snapshot,0x1e40,restore.bag.count);
-        for(size_t at:{size_t(0x1e28),size_t(0x1e2c),size_t(0x1e30),size_t(0x1e34)}) {
-            const auto value=read<uint16_t>(snapshot,at);
-            if(read<uint8_t>(snapshot,at+2)&&value>restore.index)set<uint16_t>(snapshot,at,static_cast<uint16_t>(value-1));
-        }
+        const auto path=marker(snapshot,rows);std::ifstream file(path,std::ios::binary);
+        std::string line;std::getline(file,line);
+        if(line!="Lantern equipment choice 1"&&restore.bag.pages!=5)return returned;
+        putGroup(snapshot,0x1e38,restore.bag);adjustReferences(snapshot,restore.index);
         loading->restore=restore;
-    }catch(...){logger("Lantern: equipment marker unavailable; native inventory retained");}
+    }catch(...){set<uint64_t>(result,0,0x11);logger("Lantern: inventory restoration refused; previous save retained");}
     return returned;
 }
 void* __fastcall import(void* result,void* references,uint32_t actor,uint8_t category,
@@ -150,9 +201,10 @@ void* __fastcall exportItems(void* result,void* snapshot,void* descriptor,void* 
     // Only export an equipped page. Empty private pages must never expand the bag.
     const auto inventory=component(world.load(),privatePage,"keen::ecs::Inventory",96);
     bool occupied=false;
-    if(inventory.data)for(unsigned i=0;i<8;++i)occupied=occupied||read<uint32_t>(inventory.data,i*12)!=0;
-    // Preserve even unexpected contents. An invalid equipment marker falls
-    // back to the native bag; it must never cause an existing item to be lost.
+    if(inventory.data)for(unsigned i=0;i<8;++i)occupied=occupied||
+        (read<uint32_t>(inventory.data,i*12)!=0&&read<uint32_t>(inventory.data,i*12+4)!=0);
+    // Native empty slots can retain an old item ID with zero quantity.
+    // Unexpected occupied contents fail snapshot validation rather than being lost.
     if(!occupied)
         return originalExport(result,snapshot,descriptor,output,setup,slots,query,state,layout,entity);
     std::array<unsigned char,84> copy{};std::memcpy(copy.data(),setup,copy.size());

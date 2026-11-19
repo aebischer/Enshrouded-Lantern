@@ -1,4 +1,4 @@
-BELT LANTERN 0.1.27-dev — WINDOWS X64
+BELT LANTERN 0.1.28-dev — WINDOWS X64
 Development build — no compiler required for the release ZIP
 
 REQUIRES: Enshrouded ModLoader (tested with 0.6.11).
@@ -34,9 +34,13 @@ Both variants share one slot, separate from the rings. The model follows the
 character's waist and provides native lighting without an exposed flame.
 Gilded light parameters: radius 187.5, intensity 100. The simple light is unchanged.
 
-SAVE DATA: back up Mods/lantern/equipment-markers with your character saves.
-The marker identifies native equipped-item storage; it is not another item.
-If missing, the item returns to the bag from native inventory storage.
+SAVE DATA: back up character saves. Equipped lanterns are committed in the
+character file; new saves do not require external equipment markers and do not
+increase bag capacity. Old markers are retained only for migration.
+Loading and saving without the mods can discard unknown custom items, even in
+the bag. Keep a backup before disabling or uninstalling mods.
+Already enlarged inventories need a separate verified repair; this update does
+not silently truncate overflow items. See docs/INVENTORY_STORAGE.md in the source.
 
 Supported enshrouded.exe SHA-256:
 5D9EF2F140B8ED49E30DBEE655841B89D08BAEC20F799A1817E171A18A850C77

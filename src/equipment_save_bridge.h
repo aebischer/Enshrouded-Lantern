@@ -66,4 +66,57 @@ inline Restore prepare(Group bag, Group backpack, const std::vector<Row>& rows,
     result.equipped=row; result.equipped[4]=0;
     return result;
 }
+// Transient tag in padding that the native item codec never serializes.
+inline void tag(Row& row) { row[53]='L'; row[54]='N'; row[55]='T'; }
+inline bool tagged(const Row& row) { return row[53]=='L' && row[54]=='N' && row[55]=='T'; }
+struct Projection {
+    bool valid=false, inBag=false;
+    Group bag{}, backpack{};
+    std::vector<Row> rows;
+    Row equipped{};
+    std::uint32_t index=0;
+};
+inline Projection project(Group bag, Group backpack, const std::vector<Row>& rows,
+                          std::uint32_t first, std::uint32_t second) {
+    Projection out{};
+    const auto restore=prepare(bag,backpack,rows,first,second);
+    if(!restore.valid || !tagged(rows[restore.index]))return out;
+    out.bag=restore.bag;out.backpack=backpack;out.rows=rows;
+    out.equipped=canonical(restore.equipped);out.index=restore.index;
+    std::array<bool,128> used{};
+    for(std::uint32_t i=bag.begin;i<restore.index;++i){
+        const auto slot=rows[i][4];if(slot>=unsigned(out.bag.pages)*8 || used[slot])return {};
+        used[slot]=true; // Preserve zero-count native rows too.
+    }
+    unsigned free=0;for(;free<unsigned(out.bag.pages)*8 && used[free];++free){}
+    if(free<unsigned(out.bag.pages)*8){
+        out.inBag=true;out.rows[restore.index]=out.equipped;
+        out.rows[restore.index][4]=static_cast<std::uint8_t>(free);++out.bag.count;
+    }else{
+        out.rows.erase(out.rows.begin()+restore.index);
+        if(out.backpack.begin>restore.index)--out.backpack.begin;
+    }
+    out.valid=true;return out;
+}
+using Extension=std::array<std::uint8_t,96>;
+inline std::uint64_t checksum(const std::uint8_t* p,std::size_t size){
+    std::uint64_t v=14695981039346656037ull;
+    for(std::size_t i=0;i<size;++i)v=(v^p[i])*1099511628211ull;
+    return v;
+}
+inline Extension extension(const Projection& p){
+    Extension e{};std::memcpy(e.data(),"LNTINV02",8);
+    set<std::uint32_t>(e.data(),8,p.inBag?1u:2u);set<std::uint32_t>(e.data(),12,p.index);
+    std::memcpy(e.data()+16,p.equipped.data(),56);
+    set<std::uint64_t>(e.data(),80,checksum(e.data(),80));
+    std::memcpy(e.data()+88,"LNTEND02",8);return e;
+}
+inline bool extensionValid(const Extension& e,std::uint32_t first,std::uint32_t second){
+    const auto mode=get<std::uint32_t>(e.data(),8),id=get<std::uint32_t>(e.data(),24);
+    return !std::memcmp(e.data(),"LNTINV02",8)&&!std::memcmp(e.data()+88,"LNTEND02",8)&&
+        (mode==1||mode==2)&&get<std::uint64_t>(e.data(),72)==0&&
+        get<std::uint64_t>(e.data(),80)==checksum(e.data(),80)&&
+        (id==first||id==second)&&id&&get<std::uint16_t>(e.data(),16)==1&&e[20]==0;
+}
+
 }

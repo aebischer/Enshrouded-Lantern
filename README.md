@@ -1,4 +1,4 @@
-# Belt Lantern for Enshrouded — 0.1.27-dev
+# Belt Lantern for Enshrouded — 0.1.28-dev
 
 Craftable belt lanterns for [Enshrouded ModLoader](https://github.com/aebischer/Enshrouded-ModLoader),
 with a dedicated equipment slot, a waist-attached model and native lighting
@@ -20,7 +20,7 @@ Enshrouded/
 ```
 
 Enable Lantern in **Edit → MODS** for the selected world, then start that world.
-When updating, preserve `Mods/lantern/equipment-markers/`.
+Preserve existing markers when updating older installations for migration.
 
 Supported Windows x64 client build: 1287369. `enshrouded.exe` SHA-256:
 
@@ -59,13 +59,21 @@ or remove an item. The model and light follow the actual equipped state.
 
 ## Save data
 
-Equipped item data is exported and imported through native inventory storage.
-A marker under `Mods/lantern/equipment-markers/` identifies a saved inventory row
-as lantern equipment. It contains no item and does not create another copy.
+Equipment is saved inside the character's `player_character` KSD section,
+with its native checksum and commit. The native bag retains its original page
+count. A 96-byte versioned extension records the equipped instance; if a normal
+bag cell is free, the native snapshot also carries that same instance there.
+With a full bag, the extension carries the instance without adding inventory pages.
+Loading with Lantern restores it to the dedicated equipment page.
 
-Back up this folder with character saves. Without its marker, the item remains
-in native inventory storage and returns to the bag. The old prototype
-`characters/*.ini` files are no longer used.
+Old `equipment-markers/*.v1` files are read for migration only. New saves do not
+require them. Back up character saves before updates. Loading and saving without
+mods can discard unknown mod items, including lanterns and pincers. Unequipping
+alone does not make custom items safe for an unmodded save; retain a backup.
+
+Version 0.1.28 fixes the extra-page overflow described in
+[the inventory repair notes](docs/INVENTORY_STORAGE.md). Already enlarged saves
+require inspection and repair; occupied overflow slots must never be truncated.
 
 ## Languages
 
@@ -100,8 +108,9 @@ saves and personal markers are not tracked. See [validation history](docs/VALIDA
 
 Offline tests pass, including localization and equipment. User testing confirmed
 equipping through the character slot and context menu, and the retained gilded
-lighting in 0.1.26. A new save/reload cycle was not performed for this localization
-build. Multiplayer, dedicated servers, tombstone interactions and other game
+lighting in 0.1.26. The 0.1.28 storage correction passes 400 simulated save/load cycles;
+the user confirmed that the repaired inventory is normal and remains stable
+after reloading (2026-11-19). Multiplayer, dedicated servers, tombstone interactions and other game
 versions are not validated. The main-menu character preview is intentionally
 not loaded before a world enables the mod; the in-world character preview is supported.
 

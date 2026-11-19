@@ -1,5 +1,5 @@
 // Record the equipment choice only after the native snapshot has succeeded.
-// Item data remains in the native snapshot; the marker never contains an item.
+// Tag the transient projection for the final encoder, which removes its extra page.
 using CharacterSnapshot=void*(__fastcall*)(void*,void*,void*,void*,void*,uint64_t,const void*);
 CharacterSnapshot originalCharacterSnapshot=nullptr;
 std::atomic<unsigned> snapshotDiagnostics{0};
@@ -8,8 +8,8 @@ void* __fastcall characterSnapshot(void* result,void* output,void* itemState,
  equipment_storage::projected=false;
  auto returned=originalCharacterSnapshot(result,output,itemState,registry,layout,time,entity);
  if(returned&&output&&!read<unsigned char>(returned,0)&&equipment_storage::projected){
-  try{if(!equipment_storage::record(output)&&logger)logger("Lantern: equipment choice could not be recorded; saved object remains in native bag");}
-  catch(...){if(logger)logger("Lantern: equipment choice unavailable; saved object remains in native bag");}
+  try{if(!equipment_storage::record(output)){const uint64_t error=0x11;std::memcpy(returned,&error,sizeof(error));if(logger)logger("Lantern: equipment snapshot validation failed; save refused");}}
+  catch(...){const uint64_t error=0x11;std::memcpy(returned,&error,sizeof(error));if(logger)logger("Lantern: equipment snapshot failed; save refused");}
  }
  if(!returned||!output||!entity||!logger)return returned;
  const auto actor=read<uint32_t>(entity,0);
@@ -30,7 +30,7 @@ void* __fastcall characterSnapshot(void* result,void* output,void* itemState,
  unsigned lanterns=0;
  for(uint64_t i=0;i<count;++i)if(lantern::native::isLantern(read<uint32_t>(rows,size_t(i)*56+8)))++lanterns;
  char line[256];sprintf_s(line,
-  "Lantern save diagnostic: actor=%u equipment=%u/16 genericPages=%u backpackPages=%u itemRows=%llu lanternRows=%u",
+  "Lantern save diagnostic (before encoding): actor=%u equipment=%u/16 projectedGenericPages=%u backpackPages=%u itemRows=%llu lanternRows=%u",
   actor,occupied,unsigned(read<unsigned char>(output,0x1e38)),
   unsigned(read<unsigned char>(output,0x1e44)),static_cast<unsigned long long>(count),lanterns);
  logger(line);

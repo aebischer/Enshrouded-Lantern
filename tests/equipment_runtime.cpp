@@ -120,6 +120,8 @@ void storage(unsigned kind=42){
  equipment_storage::projected=false;
  equipment_storage::exportItems(result.data(),nullptr,nullptr,nullptr,setup.data,nullptr,nullptr,nullptr,nullptr,entity.data());
  assert(!equipment_storage::projected&&exportedSetup[65]==1);
+ *stack(30)={42,0,123};equipment_storage::exportItems(result.data(),nullptr,nullptr,nullptr,setup.data,nullptr,nullptr,nullptr,nullptr,entity.data());
+ assert(!equipment_storage::projected&&exportedSetup[65]==1);
  *stack(30)={42,1,123};equipment_storage::exportItems(result.data(),nullptr,nullptr,nullptr,setup.data,nullptr,nullptr,nullptr,nullptr,entity.data());
  assert(equipment_storage::projected&&exportedSetup[65]==4&&setup.data[65]==1);
  std::array<unsigned char,0x2000> snapshot{};
@@ -130,9 +132,11 @@ void storage(unsigned kind=42){
  snapshot[0x1e38]=2;set<uint32_t>(snapshot.data(),0x1e40,2);
  set<const void*>(snapshot.data(),0x1e50,rows.data());set<uint64_t>(snapshot.data(),0x1e58,2);set<uint64_t>(snapshot.data(),0x1e60,2);
  assert(equipment_storage::record(snapshot.data()));const auto marker=equipment_storage::marker(snapshot.data(),rows);
+ std::filesystem::create_directories(marker.parent_path());{std::ofstream f(marker,std::ios::binary);f<<"Lantern equipment choice 1\n";}
+ std::array<unsigned char,16> emptySpan{};
  equipment_storage::originalDecode=&nativeDecode;equipment_storage::originalImport=&nativeImport;
  equipment_storage::Loading pending{};equipment_storage::loading=&pending;
- equipment_storage::decode(result.data(),snapshot.data(),nullptr,nullptr);
+ equipment_storage::decode(result.data(),snapshot.data(),nullptr,emptySpan.data());
  assert(pending.parsed&&pending.restore.valid&&snapshot[0x1e38]==1&&read<uint32_t>(snapshot.data(),0x1e40)==1);
  set<uint32_t>(setup.data,4,0);setup.data[65]=0;
  // Native import context contains the scene, not its ECS storage.
@@ -142,8 +146,12 @@ void storage(unsigned kind=42){
  assert(!result[0]&&pending.created&&equipment_storage::page==30&&stack(30)->persistentId==123&&stack(30)->item==kind&&imports==3);
  equipment_storage::loading=nullptr;std::filesystem::remove(marker);
  snapshot[0x1e38]=2;set<uint32_t>(snapshot.data(),0x1e40,2);pending={};equipment_storage::loading=&pending;
- equipment_storage::decode(result.data(),snapshot.data(),nullptr,nullptr);
- assert(!pending.restore.valid&&snapshot[0x1e38]==2);equipment_storage::loading=nullptr;
+ equipment_storage::decode(result.data(),snapshot.data(),nullptr,emptySpan.data());
+ assert(!pending.restore.valid&&snapshot[0x1e38]==2);
+ snapshot[0x1e38]=6;rows[1][4]=40;pending={};
+ equipment_storage::decode(result.data(),snapshot.data(),nullptr,emptySpan.data());
+ assert(pending.restore.valid&&snapshot[0x1e38]==5&&read<uint32_t>(snapshot.data(),0x1e40)==1);
+ equipment_storage::loading=nullptr;
 }
 unsigned browsed=0;
 uint64_t nativeBrowser(void* config,const void* span){
@@ -302,5 +310,6 @@ void cleanupRegression(){
  assert(cleanupCalls==5);
  std::cout<<"PASS: native customization purge, compaction, repeated empty/occupied cleanup, subsequent equip/unequip, foreign context passthrough\n";
 }
-int main(){transfers();storage();imports=0;storage(43);interface();uiRegression();contextMenuRegression();cleanupRegression();std::cout<<"PASS: production adapters: inventory transfers, full-bag replacement, failure statuses, native passthrough, save projection/import, absent marker fallback, multiple selector instances, input immutability\n";}
-
+// Extension tests must run after the native-adapter regressions.
+#include "equipment_extension.inl"
+int main(){transfers();storage();imports=0;storage(43);interface();uiRegression();contextMenuRegression();cleanupRegression();extension_tests::run();std::cout<<"PASS: production adapters: inventory transfers, full-bag replacement, failure statuses, native passthrough, save projection/import, absent marker fallback, multiple selector instances, input immutability\n";}
