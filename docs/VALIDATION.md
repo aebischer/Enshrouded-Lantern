@@ -1,6 +1,6 @@
 # Lantern validation history and current status
 
-Current working build: 0.1.31-dev, for ModLoader 0.6.14 standalone or under Kiln. Offline build, content, equipment and production text-adapter tests passed. Catalogue validation requires all 15 game languages for both item names/descriptions, category and equipment title; English fallback does not count as coverage.
+Current working build: 0.1.31-dev, for ModLoader 0.6.15 standalone or under Kiln. Offline build, content, equipment and production text-adapter tests passed. Catalogue validation requires all 15 game languages for both item names/descriptions, category and equipment title; English fallback does not count as coverage.
 
 ## Direct-stream persistence correction â€” 0.1.31
 

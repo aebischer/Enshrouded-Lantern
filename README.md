@@ -8,7 +8,7 @@ without an exposed flame. Windows x64, SDK ABI 1; currently intended for solo pl
 
 The repository and compiled downloads are public; no GitHub account is required.
 
-Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader 0.6.12 or newer first, close the game, then copy the compiled files into:
+Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader 0.6.15 or newer first, close the game, then copy the compiled files into:
 
 ```text
 Enshrouded/
@@ -131,11 +131,11 @@ Nominal height: 28 cm; LOD triangle counts: 4,000, 1,200 and 558.
 
 ## Package layout update
 
-This release requires ModLoader **0.6.12 or newer**. Install the loader first: its
+This release requires ModLoader **0.6.15 or newer**. Install the loader first: its
 installer migrates recognized old packages into `Mods/EnshroudedModLoader/`,
 including package data, while retaining mod IDs and per-world settings. Then
 merge this release's `Mods` directory into the game directory. Do not delete
-`ModLoader/worlds` or keep duplicate legacy package folders.
+`Mods/EnshroudedModLoader/worlds` or keep duplicate legacy package folders.
 
 Download the [compiled package](https://github.com/aebischer/Enshrouded-Lantern/releases/tag/v0.1.31-dev).
 
@@ -160,7 +160,7 @@ the user confirmed equipped-state persistence after reloading with Kiln.
 
 Use the same mod download in both cases. **Kiln is optional.**
 
-- **Without Kiln:** install [ModLoader 0.6.14](https://github.com/aebischer/Enshrouded-ModLoader/releases/tag/v0.6.14)
+- **Without Kiln:** install [ModLoader 0.6.15](https://github.com/aebischer/Enshrouded-ModLoader/releases/tag/v0.6.15)
   with `Install.cmd`; it installs its proxy as `<game>/dinput8.dll`.
 - **With Kiln:** install [Kiln](https://github.com/frostdev-ops/kiln/releases) first,
   then run the same ModLoader `Install.cmd`. It detects Kiln and installs the
@@ -176,9 +176,16 @@ allow native drop-ins. Do not run two copies of the loader. When adding Kiln to
 an existing standalone installation, close the game, install Kiln, then rerun
 ModLoader's installer so it can migrate receipt-identified old chain copies.
 After removing Kiln, rerun the installer to restore standalone startup.
-Preserve `ModLoader/worlds`, package data and installer receipts when updating.
+Preserve `Mods/EnshroudedModLoader/worlds`, package data and installer receipts when updating.
 
 Solo gameplay was tested with ModLoader 0.6.14, CarryOn 0.1.52-dev and Lantern
 0.1.31-dev under Kiln **0.2.0-dev.29.19-beta.1**. Lantern lighting and equipped-state
 restoration after reload were confirmed in game. This does not certify other
 Kiln-hosted frameworks, multiplayer or future game/Kiln builds.
+
+## World profiles migration (ModLoader 0.6.15)
+
+Run the loader Install.cmd before updating or starting the game. It migrates
+old ModLoader/worlds files to Mods/EnshroudedModLoader/worlds, with verified
+backups, conflict checks and restartable copying. Preserve the new worlds
+folder when updating mods. Use 0.6.15 or newer for this directory layout.
