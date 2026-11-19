@@ -1,19 +1,19 @@
-BELT LANTERN 0.1.28-dev — WINDOWS X64
+BELT LANTERN 0.1.29-dev — WINDOWS X64
 Development build — no compiler required for the release ZIP
 
-REQUIRES: Enshrouded ModLoader (tested with 0.6.11).
+REQUIRES: Enshrouded ModLoader 0.6.12 or newer.
 https://github.com/aebischer/Enshrouded-ModLoader/releases
 Install the loader first using its INSTALLATION.txt.
 
 1. Close Enshrouded and back up your saves.
 2. Extract the complete Lantern ZIP.
 3. In Steam: Enshrouded -> Properties -> Installed Files -> Browse.
-4. Merge Mods/lantern into the game's Mods directory beside enshrouded.exe:
+4. Merge the supplied Mods directory into the game directory beside enshrouded.exe:
 
 Enshrouded/
   enshrouded.exe
   dinput8.dll                    supplied by the loader
-  Mods/
+  Mods/EnshroudedModLoader/
     lantern/
       lantern.dll
       lantern.dll.mod
@@ -53,3 +53,8 @@ Offline localization, equipment and content tests pass; visual/linguistic review
 of the new translations remains a manual in-game check.
 Use SHA256SUMS.txt and Get-FileHash to verify release contents.
 Sources and public downloads: https://github.com/aebischer/Enshrouded-Lantern
+
+LAYOUT UPDATE: install ModLoader 0.6.12 first. Its installer migrates recognized
+old packages from Mods into Mods/EnshroudedModLoader, including package data.
+Then copy this update. Relative mod IDs and ModLoader/worlds settings stay unchanged.
+Do not keep duplicate old and new package folders.

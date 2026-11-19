@@ -1,4 +1,4 @@
-# Belt Lantern for Enshrouded — 0.1.28-dev
+# Belt Lantern for Enshrouded — 0.1.29-dev
 
 Craftable belt lanterns for [Enshrouded ModLoader](https://github.com/aebischer/Enshrouded-ModLoader),
 with a dedicated equipment slot, a waist-attached model and native lighting
@@ -8,14 +8,13 @@ without an exposed flame. Windows x64, SDK ABI 1; currently intended for solo pl
 
 The repository and compiled downloads are public; no GitHub account is required.
 
-Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader first (tested
-with 0.6.11), close the game, then copy the compiled files into:
+Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader 0.6.12 or newer first, close the game, then copy the compiled files into:
 
 ```text
 Enshrouded/
   enshrouded.exe
   dinput8.dll                supplied by ModLoader
-  Mods/
+  Mods/EnshroudedModLoader/
     lantern/
       lantern.dll
       lantern.dll.mod
@@ -95,7 +94,7 @@ still need visual and linguistic review in-game.
 Install Visual Studio 2022 C++ x64 tools, the Windows SDK and PowerShell.
 Clone the repository and run `build.cmd` from its root. Prepared model packs,
 icons, SDK headers and MinHook are included. CarryOn and game extracts are not
-needed to build the DLL. Output: `dist/Mods/lantern/`.
+needed to build the DLL. Output: `dist/Mods/EnshroudedModLoader/lantern/`.
 
 - `tests/test-localization.cmd`: all 15 languages, native lookup/format adapters,
   equipment title, language changes, fallbacks and unrelated native text.
@@ -129,3 +128,14 @@ and RMA BC1_UNORM. Then run `pack-lantern-model.py --gold`.
 `python tests/test-lantern-model.py --gold` uses the independent decoder configured through
 `LANTERN_MODEL_REFERENCE`. The gilded pack is embedded as DLL resource 402.
 Nominal height: 28 cm; LOD triangle counts: 4,000, 1,200 and 558.
+
+## Package layout update
+
+This release requires ModLoader **0.6.12 or newer**. Install the loader first: its
+installer migrates recognized old packages into `Mods/EnshroudedModLoader/`,
+including package data, while retaining mod IDs and per-world settings. Then
+merge this release's `Mods` directory into the game directory. Do not delete
+`ModLoader/worlds` or keep duplicate legacy package folders.
+
+This update changes distribution paths and documentation; gameplay behavior is
+unchanged. Download the [compiled package](https://github.com/aebischer/Enshrouded-Lantern/releases/tag/v0.1.29-dev).

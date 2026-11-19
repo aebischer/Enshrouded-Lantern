@@ -4,7 +4,7 @@ cd /d "%~dp0"
 call tools\vcvars.cmd
 if errorlevel 1 exit /b 1
 if not exist build mkdir build
-if not exist dist\Mods\lantern mkdir dist\Mods\lantern
+if not exist dist\Mods\EnshroudedModLoader\lantern mkdir dist\Mods\EnshroudedModLoader\lantern
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\embed-icon.ps1
 if errorlevel 1 exit /b 1
 pushd build
