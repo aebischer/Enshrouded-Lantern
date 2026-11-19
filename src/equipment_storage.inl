@@ -8,6 +8,8 @@ using Load=void*(__fastcall*)(void*,const void*,void*,uint32_t,const void*);
 using Export=void*(__fastcall*)(void*,void*,void*,void*,const void*,void*,void*,void*,void*,void*);
 Import originalImport=nullptr;
 Decode originalDecode=nullptr;
+using DecodeStream=void*(__fastcall*)(void*,void*,void*,void*);
+DecodeStream originalDecodeStream=nullptr;
 Load originalLoad=nullptr;
 Export originalExport=nullptr;
 struct Loading { uint32_t actor=0; bool parsed=false,created=false; Restore restore{}; };
@@ -75,6 +77,41 @@ bool record(void* snapshot) {
 void putGroup(void* snapshot,size_t at,Group value){
     set<uint8_t>(snapshot,at,value.pages);set<uint32_t>(snapshot,at+4,value.begin);set<uint32_t>(snapshot,at+8,value.count);
 }
+// Character data is decoded/re-encoded between the server snapshot and the
+// final KSD section. Rebuild the transient private row for that intermediate
+// snapshot so the next encoder can project it again, without growing the save.
+bool retainExtension(void* snapshot,const Extension& ext,std::vector<Row> rows) {
+    auto bag=group(snapshot,0x1e38),backpack=group(snapshot,0x1e44);
+    const auto index=read<uint32_t>(ext.data(),12),mode=read<uint32_t>(ext.data(),8);
+    Row equippedRow{};std::memcpy(equippedRow.data(),ext.data()+16,56);
+    if(!valid(bag,rows.size())||!valid(backpack,rows.size())||bag.pages>=16)return false;
+    if(mode==1){
+        if(!bag.count||index!=bag.begin+bag.count-1||index>=rows.size())return false;
+        auto actual=canonical(rows[index]);actual[4]=0;
+        if(actual!=equippedRow)return false;
+    }else{
+        if(index!=bag.begin+bag.count||index>rows.size()||rows.size()>=248)return false;
+        rows.insert(rows.begin()+index,equippedRow);++bag.count;
+        if(backpack.begin>=index)++backpack.begin;
+    }
+    equippedRow[4]=static_cast<uint8_t>(bag.pages*8);tag(equippedRow);
+    rows[index]=equippedRow;++bag.pages;
+    auto vector=static_cast<unsigned char*>(snapshot)+0x1e50;
+    if(rows.size()>read<uint64_t>(vector,16)){
+        // Same native grow callback used by e1afc0. Never replace the allocator.
+        const auto grow=read<uint8_t(__fastcall*)(void*,int64_t,uint64_t)>(vector,24);
+        if(!grow||!grow(vector,-static_cast<int64_t>(rows.size()),0))return false;
+    }
+    auto data=read<Row*>(vector,0);
+    if(!data||rows.size()>read<uint64_t>(vector,16))return false;
+    std::memcpy(data,rows.data(),rows.size()*sizeof(Row));set<uint64_t>(vector,8,rows.size());
+    putGroup(snapshot,0x1e38,bag);putGroup(snapshot,0x1e44,backpack);
+    if(mode==2)for(size_t at:{size_t(0x1e28),size_t(0x1e2c),size_t(0x1e30),size_t(0x1e34)}){
+        const auto value=read<uint16_t>(snapshot,at);
+        if(read<uint8_t>(snapshot,at+2)&&value>=index)set<uint16_t>(snapshot,at,static_cast<uint16_t>(value+1));
+    }
+    return true;
+}
 void adjustReferences(void* snapshot,uint32_t removed){
     for(size_t at:{size_t(0x1e28),size_t(0x1e2c),size_t(0x1e30),size_t(0x1e34)}){
         const auto value=read<uint16_t>(snapshot,at);
@@ -102,7 +139,10 @@ void* __fastcall encode(void* result,void* stream,void* compressor,const void* s
         if(!returned||read<uint8_t>(returned,0))return returned;
         const auto ext=extension(p);
         ui<void(__fastcall*)(void*,const void*,uint64_t)>(0x043b20)(stream,ext.data(),ext.size());
-        set<uint8_t>(returned,0,read<uint8_t>(stream,0x20));return returned;
+        set<uint8_t>(returned,0,read<uint8_t>(stream,0x20));
+        static std::atomic<unsigned> reports{0};
+        if(!read<uint8_t>(returned,0)&&reports.fetch_add(1)<2)logger("Lantern: equipped instance encoded with bounded inventory extension");
+        return returned;
     }catch(...){set<uint64_t>(result,0,0x11);logger("Lantern: character encoding refused; previous save retained");return result;}
 }
 void* __fastcall load(void* result,const void* blob,void* server,uint32_t index,const void* argument) {
@@ -110,6 +150,33 @@ void* __fastcall load(void* result,const void* blob,void* server,uint32_t index,
     struct Scope {Loading* previous;~Scope(){loading=previous;}} scope{loading};
     loading=&state;
     const auto returned=originalLoad(result,blob,server,index,argument);
+    return returned;
+}
+// e0f470 is only the span adapter used by world import. Native character
+// synchronization (dd30f0, e2356c) calls the underlying stream reader directly.
+// Its contiguous buffer uses data/+0, size/+8, cursor/+0x18. Inspect the trailer
+// before decoding: compressed readers can consume their input in large blocks.
+void* __fastcall decodeStream(void* result,void* snapshot,void* allocator,void* stream) {
+    Extension ext{};bool extended=false;
+    if(stream&&!loading){
+        const auto data=read<const unsigned char*>(stream,0);
+        const auto size=read<uint64_t>(stream,8),cursor=read<uint64_t>(stream,0x18);
+        if(data&&size<=16*1024*1024&&cursor<=size&&size-cursor>=ext.size()&&
+           !std::memcmp(data+size-8,"LNTEND02",8)){
+            std::memcpy(ext.data(),data+size-ext.size(),ext.size());
+            if(!extensionValid(ext,lantern::native::itemId(),lantern::native::goldItemId())){
+                set<uint64_t>(result,0,0x11);logger("Lantern: damaged streamed equipment extension; decode refused");return result;
+            }
+            extended=true;
+        }
+    }
+    const auto returned=originalDecodeStream(result,snapshot,allocator,stream);
+    if(extended&&returned&&!read<uint8_t>(returned,0)&&snapshot)try{
+        std::vector<Row> rows;
+        if(!rowsOf(snapshot,rows)||!retainExtension(snapshot,ext,std::move(rows))){
+            set<uint64_t>(result,0,0x11);logger("Lantern: streamed equipment snapshot refused");
+        }else{static std::atomic<unsigned> reports{0};if(reports.fetch_add(1)<2)logger("Lantern: equipped instance retained through native stream decode");}
+    }catch(...){set<uint64_t>(result,0,0x11);}
     return returned;
 }
 void* __fastcall decode(void* result,void* snapshot,void* allocator,const void* span) {
@@ -124,7 +191,16 @@ void* __fastcall decode(void* result,void* snapshot,void* allocator,const void* 
         input.size-=ext.size();extended=true;
     }
     const auto returned=originalDecode(result,snapshot,allocator,extended?&input:span);
-    if(!loading||!returned||read<uint8_t>(returned,0)||!snapshot)return returned;
+    if(!returned||read<uint8_t>(returned,0)||!snapshot)return returned;
+    if(!loading){
+        if(extended)try{
+            std::vector<Row> rows;
+            if(!rowsOf(snapshot,rows)||!retainExtension(snapshot,ext,std::move(rows))){
+                set<uint64_t>(result,0,0x11);logger("Lantern: intermediate equipment snapshot refused");
+            }else {static std::atomic<unsigned> reports{0};if(reports.fetch_add(1)<2)logger("Lantern: equipped instance retained through intermediate character decode");}
+        }catch(...){set<uint64_t>(result,0,0x11);}
+        return returned;
+    }
     loading->parsed=true;
     try {
         std::vector<Row> rows;if(!rowsOf(snapshot,rows))return returned;

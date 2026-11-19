@@ -1,4 +1,4 @@
-# Belt Lantern for Enshrouded — 0.1.29-dev
+# Belt Lantern for Enshrouded — 0.1.31-dev
 
 Craftable belt lanterns for [Enshrouded ModLoader](https://github.com/aebischer/Enshrouded-ModLoader),
 with a dedicated equipment slot, a waist-attached model and native lighting
@@ -13,7 +13,7 @@ Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader 0.6.12 or newer f
 ```text
 Enshrouded/
   enshrouded.exe
-  dinput8.dll                supplied by ModLoader
+  dinput8.dll                ModLoader standalone, or Kiln when installed
   Mods/EnshroudedModLoader/
     lantern/
       lantern.dll
@@ -137,5 +137,48 @@ including package data, while retaining mod IDs and per-world settings. Then
 merge this release's `Mods` directory into the game directory. Do not delete
 `ModLoader/worlds` or keep duplicate legacy package folders.
 
-This update changes distribution paths and documentation; gameplay behavior is
-unchanged. Download the [compiled package](https://github.com/aebischer/Enshrouded-Lantern/releases/tag/v0.1.29-dev).
+Download the [compiled package](https://github.com/aebischer/Enshrouded-Lantern/releases/tag/v0.1.31-dev).
+
+## Kiln lighting and equipment persistence — 0.1.31
+
+The private light is registered before native FX startup, including Kiln's
+unknown-effect guard. The guard remains active for other effects, and neither
+lantern's light parameters change. Standalone loading uses the same DLL.
+
+Equipment metadata is handled through both native stream and span decoding and re-encoding
+between the server snapshot and the final save. Saved inventory capacity remains
+unchanged. This fixes a lantern returning to the bag on reload. Lanterns already
+returned to the bag must be equipped once again; the mod does not guess which
+one the player wants. No save editing is required.
+
+Offline regression tests pass. The user confirmed light rendering with Kiln in
+0.1.30; equipped-state persistence still failed there because the stream decoder
+bypassed the span adapter. Version 0.1.31 covers that additional entry point;
+the user confirmed equipped-state persistence after reloading with Kiln.
+
+## With or without Kiln
+
+Use the same mod download in both cases. **Kiln is optional.**
+
+- **Without Kiln:** install [ModLoader 0.6.14](https://github.com/aebischer/Enshrouded-ModLoader/releases/tag/v0.6.14)
+  with `Install.cmd`; it installs its proxy as `<game>/dinput8.dll`.
+- **With Kiln:** install [Kiln](https://github.com/frostdev-ops/kiln/releases) first,
+  then run the same ModLoader `Install.cmd`. It detects Kiln and installs the
+  same loader binary as `kiln/native/enshrouded-modloader/modloader.dll` with
+  `native.json`. Kiln keeps ownership of the root `dinput8.dll`.
+- In either case, merge this mod's `Mods` folder into the game directory and
+  enable it in **Edit world -> MODS**. CarryOn and Lantern are loaded by
+  ModLoader, not directly by Kiln: do not copy their DLLs into `kiln/native`,
+  `kiln/chain` or the game root.
+
+If your Kiln profile restricts native modules, enable `enshrouded-modloader` or
+allow native drop-ins. Do not run two copies of the loader. When adding Kiln to
+an existing standalone installation, close the game, install Kiln, then rerun
+ModLoader's installer so it can migrate receipt-identified old chain copies.
+After removing Kiln, rerun the installer to restore standalone startup.
+Preserve `ModLoader/worlds`, package data and installer receipts when updating.
+
+Solo gameplay was tested with ModLoader 0.6.14, CarryOn 0.1.52-dev and Lantern
+0.1.31-dev under Kiln **0.2.0-dev.29.19-beta.1**. Lantern lighting and equipped-state
+restoration after reload were confirmed in game. This does not certify other
+Kiln-hosted frameworks, multiplayer or future game/Kiln builds.

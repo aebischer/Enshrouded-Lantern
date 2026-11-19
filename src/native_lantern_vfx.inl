@@ -77,3 +77,27 @@ uint32_t* __fastcall lanternVfxCreate(uint32_t* out,void* context,const Guid* ke
  if(!reported.exchange(true))log("Lantern: point light unavailable; VFX instance safely omitted");
  *out=0;return out;
 }
+
+// FxStart precedes CreateInstance. Kiln checks the native catalogue here and
+// clears unknown GUIDs, so register our light before forwarding to that guard.
+// These offsets belong to the executable hash checked during initialization.
+using FxStart=void(__fastcall*)(void*,Byte*,int64_t,void*);
+FxStart originalFxStart=nullptr;
+void __fastcall lanternFxStart(void* controller,Byte* entry,int64_t now,void* timing) {
+ if(controller&&entry&&entry[0]==1) {
+  const auto key=read<Guid>(entry,0x160);
+  for(size_t i=0;i<std::size(entries);++i) {
+   if(entries[i].kind!=ResourceKind::Light||entries[i].key.guid!=key)continue;
+   try {
+    const auto renderer=read<void*>(controller,8);
+    const auto holder=renderer?read<void*>(renderer,0x98):nullptr;
+    const auto scene=holder?read<void*>(holder,0x950):nullptr;
+    const auto manager=scene?read<void*>(scene,8):nullptr;
+    std::lock_guard<std::mutex> lock(lanternVfxMutex);
+    prepareLanternVfx(manager,i);
+   }catch(const std::exception&){}
+   break;
+  }
+ }
+ originalFxStart(controller,entry,now,timing);
+}

@@ -26,6 +26,16 @@ void __fastcall insert(void* manager,const Guid* key){
  write<const void*>(records+count*0xc0,0x10,records);
 }
 uint32_t* __fastcall create(uint32_t* out,void*,const Guid*,const void*,const void*){++creations;*out=42;return out;}
+unsigned starts=0;
+void* expectedManager=nullptr;
+void __fastcall guardedStart(void*,Byte* entry,int64_t now,void* timing){
+ ++starts;assert(now==123&&timing==nullptr);
+ if(entry&&entry[0]==1){
+  const auto key=read<Guid>(entry,0x160);uint32_t index=0;
+  // Model Kiln's earlier guard: unregistered GUIDs are erased before CreateInstance.
+  if(!lanternVfxIndex(expectedManager,key,index))std::memset(entry+0x160,0,16);
+ }
+}
 void run(){
  Bytes manager(0x2200),records(8*0xc0),context(16);
  uint64_t bits=0,pending=0;Guid keys[8]{};uint32_t values[8]{};
@@ -64,6 +74,28 @@ void run(){
  lanternVfxCreate(&out,context.data(),&gold,nullptr,nullptr);
  lanternVfxCreate(&out,context.data(),&key,nullptr,nullptr);
  assert(registrations==4&&creations==7);
+ // Reproduce the real Kiln failure on an empty catalogue, for both variants.
+ Bytes controller(16),renderer(0xa0),holder(0x958),fx(0x180);
+ write(controller.data(),8,renderer.data());write(renderer.data(),0x98,holder.data());
+ write(holder.data(),0x950,context.data());originalFxStart=guardedStart;expectedManager=manager.data();
+ for(const auto& light:{key,gold}){
+  bits=0;write<uint32_t>(manager.data(),0x1c2c,0);fx[0]=1;write(fx.data(),0x160,light);
+  guardedStart(controller.data(),fx.data(),123,nullptr);assert(read<Guid>(fx.data(),0x160)==Guid{});
+  write(fx.data(),0x160,light);
+  lanternFxStart(controller.data(),fx.data(),123,nullptr);
+  assert(read<Guid>(fx.data(),0x160)==light);
+  const auto count=registrations;
+  lanternFxStart(controller.data(),fx.data(),123,nullptr);assert(registrations==count);
+ }
+ // Unrelated effects keep the guard, and resource failure never bypasses it.
+ write(fx.data(),0x160,other);lanternFxStart(controller.data(),fx.data(),123,nullptr);
+ assert(read<Guid>(fx.data(),0x160)==Guid{});
+ bits=0;write<uint32_t>(manager.data(),0x1c2c,0);available=false;
+ write(fx.data(),0x160,key);lanternFxStart(controller.data(),fx.data(),123,nullptr);
+ assert(read<Guid>(fx.data(),0x160)==Guid{});available=true;
+ fx[0]=0;write(fx.data(),0x160,key);lanternFxStart(controller.data(),fx.data(),123,nullptr);
+ assert(read<Guid>(fx.data(),0x160)==key);
+ lanternFxStart(nullptr,nullptr,123,nullptr);assert(starts==10);
  std::cout<<"PASS: VFX registration before creation, repeated calls, catalogue renewal, collisions, missing resource/capacity, native passthrough, null context\n";
 }
 }

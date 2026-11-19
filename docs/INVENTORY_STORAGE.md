@@ -28,7 +28,7 @@ All fields are little-endian:
 | 12 | 4 | projected item-row index |
 | 16 | 56 | canonical equipped row (slot zero) |
 | 72 | 8 | reserved, zero |
-| 80 | 8 | FNV-1a 64-bit checksum of bytes 0–79 |
+| 80 | 8 | FNV-1a 64-bit checksum of bytes 0â€“79 |
 | 88 | 8 | `LNTEND02` |
 
 The decoder strips the extension before native decoding. It verifies the matching
@@ -62,3 +62,13 @@ This tool is intentionally restricted to the inspected damaged character layout.
 It is not suitable for arbitrary saves or characters using other inventory mods.
 Always close the game, back up the full save directory, verify the output and
 confirm the source hash has not changed before replacing an active save.
+
+## Native stream relay (0.1.31)
+
+Both the span adapter and the underlying native stream decoder preserve the
+equipment extension through intermediate character synchronization. The latter
+is also called directly by the engine. The transient private row is reconstructed
+only for intermediate snapshots; final encoding projects it back to the normal
+bag capacity. World import restores the actual equipment slot. Tests cover both
+paths, nonzero stream cursors and compressed read-ahead. User testing under Kiln
+confirmed that equipment remains selected after reloading.

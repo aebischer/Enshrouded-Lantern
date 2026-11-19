@@ -415,6 +415,7 @@ struct Hook {uintptr_t rva;void* detour;void** original;};
 #include "native_lantern_textures.inl"
 #include "native_lantern_vfx.inl"
 Hook hooks[]={
+ {0x2a1b50,reinterpret_cast<void*>(&lanternFxStart),reinterpret_cast<void**>(&originalFxStart)},
  {0x197de0,reinterpret_cast<void*>(&lanternVfxCreate),reinterpret_cast<void**>(&originalVfxCreate)},
  {0xb5580,reinterpret_cast<void*>(&lanternTextureLookup),reinterpret_cast<void**>(&originalTextureLookup)},
  {0x1081020,reinterpret_cast<void*>(&pollCompletion),reinterpret_cast<void**>(&originalPollCompletion)},
