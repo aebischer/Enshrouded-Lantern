@@ -6,6 +6,8 @@ without an exposed flame. Windows x64, SDK ABI 1; currently intended for solo pl
 
 ## Installation
 
+The repository and compiled downloads are public; no GitHub account is required.
+
 Follow [INSTALLATION.txt](INSTALLATION.txt). Install ModLoader first (tested
 with 0.6.11), close the game, then copy the compiled files into:
 

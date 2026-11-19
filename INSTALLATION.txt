@@ -52,4 +52,4 @@ All 15 game interface languages are included. Documentation uses English.
 Offline localization, equipment and content tests pass; visual/linguistic review
 of the new translations remains a manual in-game check.
 Use SHA256SUMS.txt and Get-FileHash to verify release contents.
-Sources and private downloads: https://github.com/aebischer/Enshrouded-Lantern
+Sources and public downloads: https://github.com/aebischer/Enshrouded-Lantern
